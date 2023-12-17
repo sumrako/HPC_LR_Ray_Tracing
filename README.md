@@ -1,81 +1,23 @@
-Ray Tracing in One Weekend in CUDA
-==================================
+# HPC Ray Tracing
+Это приложение представляет собой реализацию трассировщика лучей (ray tracer) с использованием CUDA для параллельных вычислений на GPU. Программа генерирует изображение сцены, состоящей из сфер, с учетом различных материалов и освещения. Многие идеи были подчерпнуты из книги [Ray Tracing on Weekend](http://in1weekend.blogspot.com/2016/01/ray-tracing-in-one-weekend.html).
 
-This is yet another _Ray Tracing in One Weekend_ clone, but this time using CUDA instead of C++.
+## Запуск:
+Данные команды создадут изображения в out.ppm и out.bmp.
+### На `Windows`
+``` bash
+make win_out.ppm
+```
 
-By Roger Allen
-May, 2018
+### На `Linux`
+``` bash
+make linux_out.ppm
+```
 
-See the [Master Branch](https://github.com/rogerallen/raytracinginoneweekend) for more information.
+## Результаты
+![Получившееся изображение](https://github.com/sumrako/HPC_LR_Ray_Tracing/blob/master/out.bmp)
+Итоговое изображение будет сохранено в файле out.bmp и out.ppm.
 
-Chapter 1
----------
-
-This introduces the basic kernel launch mechanism & host/device memory management.  We are just creating an image on the GPU device and cudaMallocmanaged allows for sharing the framebuffer and automatically copying that buffer to & from the device.
-
-I also added a timer to see how long it takes the GPU to do rendering.
-
-Chapter 2
----------
-
-Because CUDA is compatible with C++ and the vec3.h class will be used on both GPU & CPU, we add `__host__` `__device__` as a prefix to all methods.
-
-Chapter 3
----------
-
-Since the ray class is only used on the GPU, we will just add `__device__` as a prefix to all methods.
-
-The color function just needs a `__device__` added since this is called from the render kernel.
-
-Note, doing a straight translation from the original C++ will mean that any floating-point constants will be doubles and math on the GPU will be forced to be double-precision.  This will hurt our performance unnecessarily.  Special attention to floating point constants must be taken (e.g. 0.5 -> 0.5f).
-
-Use the "profile_metrics" makefile target to count inst_fp_64 and be sure that is 0.
-
-Chapter 4
----------
-
-We only need to add a `__device__` to the hit_sphere() call and use profile_metrics to watch for those floating-point constants.
-
-Chapter 5
----------
-
-Here we have to create our world of spheres on the device and get familiar with how we do memory management for CUDA C++ classes.  Note the cudaMalloc of `d_list` and `d_world` and the `create_world` kernel.
-
-Again, attend to `__device__` and floating-point constants in hitable.h, hitable_list.h and sphere.h.
-
-Chapter 6
----------
-
-In this chapter we need to understand using cuRAND for per-thread random numbers.  See `d_rand_state` and `render_init`.
-
-Note that now using debug flags in compilation makes a big difference in runtime.  Remove those flags for a signficant speedup.
-
-Chapter 7
----------
-
-Matching the C++ code in the color function in main.cu would recurse enough into the color() calls that it was crashing the program by overrunning the stack, so we turn this function into a limited-depth loop instead.  Later code in the book limits to a max depth of 50, so we adapt this a few chapters early on the GPU.
-
-Chapter 8
----------
-
-Just more plumbing for per-thread local random state, mostly.
-
-Chapter 9
----------
-
-Similar to previous modifications.
-
-Chapter 10
-----------
-
-Similar to previous modifications.
-
-Chapter 11
-----------
-
-Similar to previous modifications.
-
-Chapter 12
-----------
-
-And we're done!
+## Оценка времени работы
+Среднее время выполнения программы у автора описанной в заглавии [книги](http://in1weekend.blogspot.com/2016/01/ray-tracing-in-one-weekend.html) составило около **90 секунд** на чистом C++, на процессоре *Intel Core i7 (6 ядер)*  для данного изображения: 
+![изображения](https://github.com/sumrako/HPC_LR_Ray_Tracing/blob/master/out.jpg)
+В моей реализации на основе cuda для создания данного изображения понадобилось **1.3 секунды** на видеокарте *Nvidia RTX 4060 Ti*.
